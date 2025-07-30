@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.6.4
+
+[compare changes](https://github.com/DimitriDerthe/nuxt-auth-service/compare/v0.6.3...v0.6.4)
+
+### 🩹 Fixes
+
+- **Bundler Warnings**: Eliminated bundler warnings for optional dependencies by implementing dynamic imports for database drivers (mysql2/promise, postgres, better-sqlite3) and TOTP dependencies (otpauth, qrcode)
+- **Build Optimization**: Improved module bundling by properly handling external dependencies with Nitro externals configuration
+- **Runtime Performance**: Enhanced module loading with conditional dependency resolution to avoid loading unnecessary packages
+
+### 🧪 Testing
+
+- **Test Coverage**: All 182 tests passing with comprehensive validation of dynamic import functionality
+- **Security Validation**: Continued validation of all enterprise security features including 2FA, RBAC, and multi-tenant functionality
+
+### ❤️ Contributors
+
+- DimitriDerthe ([@DimitriDerthe](http://github.com/DimitriDerthe))
+- Claude AI Assistant (Development Support)
+
 ## v0.6.3
 
 [compare changes](https://github.com/DimitriDerthe/nuxt-auth-service/compare/v0.6.2...v0.6.3)

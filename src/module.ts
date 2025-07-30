@@ -434,11 +434,35 @@ export default defineNuxtModule<ModuleOptions>({
         method: 'post',
       })
     }
-    // Set node:crypto as unenv external
+    // Set node:crypto and optional dependencies as unenv external
     nuxt.options.nitro.unenv ||= {}
     nuxt.options.nitro.unenv.external ||= []
-    if (!nuxt.options.nitro.unenv.external.includes('node:crypto')) {
-      nuxt.options.nitro.unenv.external.push('node:crypto')
+    
+    // Also configure Nitro externals for bundling
+    nuxt.options.nitro.externals ||= {}
+    if (Array.isArray(nuxt.options.nitro.externals)) {
+      nuxt.options.nitro.externals = { external: [] }
+    }
+    if (!nuxt.options.nitro.externals.external) {
+      nuxt.options.nitro.externals.external = []
+    }
+    
+    const externals = [
+      'node:crypto',
+      'better-sqlite3',
+      'postgres',
+      'mysql2/promise',
+      'otpauth',
+      'qrcode'
+    ]
+    
+    for (const external of externals) {
+      if (!nuxt.options.nitro.unenv.external.includes(external)) {
+        nuxt.options.nitro.unenv.external.push(external)
+      }
+      if (Array.isArray(nuxt.options.nitro.externals.external) && !nuxt.options.nitro.externals.external.includes(external)) {
+        nuxt.options.nitro.externals.external.push(external)
+      }
     }
 
     // Runtime Config
@@ -461,7 +485,7 @@ export default defineNuxtModule<ModuleOptions>({
 
     // Database configuration
     runtimeConfig.database = defu(runtimeConfig.database, {
-      url: process.env.NUXT_DATABASE_URL,
+      url: process.env.NUXT_DATABASE_URL || undefined,
       migrationsPath: options.database?.migrationsPath,
       autoMigrate: options.database?.autoMigrate,
       enableLogging: options.database?.enableLogging,
@@ -477,7 +501,7 @@ export default defineNuxtModule<ModuleOptions>({
     runtimeConfig.multiTenant = defu(runtimeConfig.multiTenant, {
       enabled: options.multiTenant?.enabled || false,
       strategy: options.multiTenant?.strategy || 'subdomain',
-      resolver: options.multiTenant?.resolver,
+      resolver: options.multiTenant?.resolver || undefined,
       header: options.multiTenant?.header,
       pathIndex: options.multiTenant?.pathIndex,
     })

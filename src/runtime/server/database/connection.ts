@@ -1,12 +1,30 @@
-import { drizzle } from 'drizzle-orm/better-sqlite3'
-import { drizzle as drizzlePostgres } from 'drizzle-orm/postgres-js'
-import { drizzle as drizzleMysql } from 'drizzle-orm/mysql2'
-import Database from 'better-sqlite3'
-import postgres from 'postgres'
-import mysql from 'mysql2/promise'
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
-import { migrate as migratePostgres } from 'drizzle-orm/postgres-js/migrator'
-import { migrate as migrateMysql } from 'drizzle-orm/mysql2/migrator'
+// Dynamic imports to avoid bundler warnings for optional dependencies
+async function loadSqliteDriver() {
+  const [{ drizzle }, Database, { migrate }] = await Promise.all([
+    import('drizzle-orm/better-sqlite3'),
+    import('better-sqlite3').then(m => m.default || m),
+    import('drizzle-orm/better-sqlite3/migrator')
+  ])
+  return { drizzle, Database, migrate }
+}
+
+async function loadPostgresDriver() {
+  const [{ drizzle }, postgres, { migrate }] = await Promise.all([
+    import('drizzle-orm/postgres-js'),
+    import('postgres').then(m => m.default || m),
+    import('drizzle-orm/postgres-js/migrator')
+  ])
+  return { drizzle, postgres, migrate }
+}
+
+async function loadMysqlDriver() {
+  const [{ drizzle }, mysql, { migrate }] = await Promise.all([
+    import('drizzle-orm/mysql2'),
+    import('mysql2/promise').then(m => m.default || m),
+    import('drizzle-orm/mysql2/migrator')
+  ])
+  return { drizzle, mysql, migrate }
+}
 import { createError } from 'h3'
 import * as schema from './schema'
 import { useRuntimeConfig } from '#imports'
@@ -23,10 +41,11 @@ export type DatabaseInstance = ReturnType<typeof drizzle> | ReturnType<typeof dr
 let dbInstance: DatabaseInstance | null = null
 let dbConfig: DatabaseConfig | null = null
 
-export function createDatabaseConnection(config: DatabaseConfig): DatabaseInstance {
+export async function createDatabaseConnection(config: DatabaseConfig): Promise<DatabaseInstance> {
   try {
     switch (config.provider) {
       case 'sqlite': {
+        const { drizzle, Database } = await loadSqliteDriver()
         const sqlite = new Database(config.url)
         const db = drizzle(sqlite, {
           schema,
@@ -36,8 +55,9 @@ export function createDatabaseConnection(config: DatabaseConfig): DatabaseInstan
       }
 
       case 'postgres': {
+        const { drizzle, postgres } = await loadPostgresDriver()
         const connection = postgres(config.url)
-        const db = drizzlePostgres(connection, {
+        const db = drizzle(connection, {
           schema,
           logger: config.enableLogging,
         })
@@ -45,8 +65,9 @@ export function createDatabaseConnection(config: DatabaseConfig): DatabaseInstan
       }
 
       case 'mysql': {
+        const { drizzle, mysql } = await loadMysqlDriver()
         const connection = mysql.createConnection(config.url)
-        const db = drizzleMysql(connection, {
+        const db = drizzle(connection, {
           schema,
           logger: config.enableLogging,
         })
@@ -73,15 +94,21 @@ export async function runMigrations(db: DatabaseInstance, config: DatabaseConfig
 
   try {
     switch (config.provider) {
-      case 'sqlite':
-        await migrate(db as ReturnType<typeof drizzle>, { migrationsFolder: config.migrationsPath })
+      case 'sqlite': {
+        const { migrate } = await loadSqliteDriver()
+        await migrate(db as any, { migrationsFolder: config.migrationsPath })
         break
-      case 'postgres':
-        await migratePostgres(db as ReturnType<typeof drizzlePostgres>, { migrationsFolder: config.migrationsPath })
+      }
+      case 'postgres': {
+        const { migrate } = await loadPostgresDriver()
+        await migrate(db as any, { migrationsFolder: config.migrationsPath })
         break
-      case 'mysql':
-        await migrateMysql(db as ReturnType<typeof drizzleMysql>, { migrationsFolder: config.migrationsPath })
+      }
+      case 'mysql': {
+        const { migrate } = await loadMysqlDriver()
+        await migrate(db as any, { migrationsFolder: config.migrationsPath })
         break
+      }
     }
   }
   catch (error) {
@@ -134,7 +161,7 @@ export async function initializeDatabase(): Promise<void> {
   }
 
   try {
-    dbInstance = createDatabaseConnection(dbConfig)
+    dbInstance = await createDatabaseConnection(dbConfig)
 
     // Run migrations if enabled
     if (runtimeConfig.database?.autoMigrate !== false) {

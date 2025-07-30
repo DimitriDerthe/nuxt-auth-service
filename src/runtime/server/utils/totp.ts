@@ -1,23 +1,21 @@
 import { randomUUID, randomBytes } from 'uncrypto'
 import { createError } from 'h3'
 
-// Conditional imports for TOTP dependencies
-let TOTP: typeof import('otpauth').TOTP | undefined
-let Secret: typeof import('otpauth').Secret | undefined
-let QRCode: typeof import('qrcode') | undefined
-
-try {
-  const otpauth = await import('otpauth')
-  TOTP = otpauth.TOTP
-  Secret = otpauth.Secret
-} catch {
-  // TOTP dependencies not available
-}
-
-try {
-  QRCode = (await import('qrcode')).default
-} catch {
-  // QR code dependency not available
+// Dynamic imports to avoid bundler warnings for optional dependencies
+async function loadTOTPDependencies() {
+  try {
+    const [otpauth, qrcode] = await Promise.all([
+      import('otpauth'),
+      import('qrcode').then(m => m.default || m)
+    ])
+    return {
+      TOTP: otpauth.TOTP,
+      Secret: otpauth.Secret,
+      QRCode: qrcode
+    }
+  } catch (error) {
+    return null
+  }
 }
 import { schema, eq, and, sql } from '../database/connection'
 import { useDatabase, isDatabaseFeatureEnabled } from './database'
@@ -30,13 +28,15 @@ import type { TOTPSecret, TOTPVerification, TOTPConfig } from '#auth-utils'
  * Generate a new TOTP secret for user
  */
 export async function generateTOTPSecret(userId: string, email: string): Promise<TOTPSecret> {
-  if (!TOTP || !Secret || !QRCode) {
+  const deps = await loadTOTPDependencies()
+  if (!deps) {
     throw createError({
       statusCode: 500,
       statusMessage: 'TOTP dependencies not available. Install otpauth and qrcode packages.',
     })
   }
 
+  const { TOTP, Secret, QRCode } = deps
   const config = useRuntimeConfig()
   const totpConfig = config.totp?.config || getDefaultTOTPConfig()
 
@@ -74,9 +74,12 @@ export async function generateTOTPSecret(userId: string, email: string): Promise
  * Verify TOTP code
  */
 export async function verifyTOTPCode(secret: string, token: string, window: number = 1): Promise<boolean> {
-  if (!TOTP || !Secret) {
+  const deps = await loadTOTPDependencies()
+  if (!deps) {
     return false
   }
+
+  const { TOTP, Secret } = deps
 
   try {
     const totp = new TOTP({
