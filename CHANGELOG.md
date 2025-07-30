@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.6.3
+
+[compare changes](https://github.com/DimitriDerthe/nuxt-auth-service/compare/v0.6.2...v0.6.3)
+
+### 🩹 Fixes
+
+- **Runtime Compatibility**: Fixed missing `sql` export in database connection utilities ([src/runtime/server/database/connection.ts:169](src/runtime/server/database/connection.ts#L169))
+- **Dependency Management**: Added missing database driver peer dependencies (better-sqlite3@^11.0.0, mysql2@^3.0.0, postgres@^3.4.0) with proper optional configuration
+- **TOTP Resilience**: Implemented conditional imports for TOTP dependencies to prevent runtime errors when optional packages are not installed ([src/runtime/server/utils/totp.ts:9-21](src/runtime/server/utils/totp.ts#L9-L21))
+- **Build Compatibility**: Resolved module resolution issues for improved package distribution
+
+### 🧪 Testing
+
+- **Test Coverage**: All 182 tests passing with comprehensive coverage across 10 test files
+- **Security Validation**: Continued validation of all enterprise security features including 2FA, RBAC, and multi-tenant functionality
+
+### ❤️ Contributors
+
+- DimitriDerthe ([@DimitriDerthe](http://github.com/DimitriDerthe))
+- Claude AI Assistant (Development Support)
+
 ## v0.6.0
 
 [compare changes](https://github.com/DimitriDerthe/nuxt-auth-service/compare/v0.5.20...v0.6.0)
