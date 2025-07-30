@@ -17,6 +17,7 @@ import type { ScryptConfig } from '@adonisjs/hash/types'
 import type { SessionConfig } from 'h3'
 import { atprotoProviderDefaultClientMetadata, atprotoProviders, getClientMetadataFilename } from './runtime/utils/atproto'
 import type { AtprotoProviderClientMetadata } from './runtime/types/atproto'
+import type { TenantStrategy, ThemeConfig, TOTPConfig } from './runtime/types'
 
 // Module options TypeScript interface definition
 export interface ModuleOptions {
@@ -30,6 +31,114 @@ export interface ModuleOptions {
    * @default false
    */
   atproto?: boolean
+  /**
+   * Database configuration
+   */
+  database?: {
+    /**
+     * Enable database features (auto-detected if NUXT_DATABASE_URL is set)
+     * @default undefined
+     */
+    enabled?: boolean
+    /**
+     * Database connection URL
+     */
+    url?: string
+    /**
+     * Path to migrations folder
+     */
+    migrationsPath?: string
+    /**
+     * Auto-run migrations on startup
+     * @default true
+     */
+    autoMigrate?: boolean
+    /**
+     * Enable SQL query logging
+     * @default false
+     */
+    enableLogging?: boolean
+  }
+  /**
+   * RBAC (Role-Based Access Control) configuration
+   */
+  rbac?: {
+    /**
+     * Enable RBAC features
+     * @default false
+     */
+    enabled?: boolean
+    /**
+     * Default role for new users
+     * @default 'user'
+     */
+    defaultRole?: string
+  }
+  /**
+   * Multi-tenant configuration
+   */
+  multiTenant?: {
+    /**
+     * Enable multi-tenant features
+     * @default false
+     */
+    enabled?: boolean
+    /**
+     * Tenant detection strategy
+     * @default 'subdomain'
+     */
+    strategy?: TenantStrategy
+    /**
+     * Custom tenant resolver function
+     */
+    resolver?: string
+    /**
+     * Header name for header strategy
+     */
+    header?: string
+    /**
+     * Path segment index for path strategy
+     */
+    pathIndex?: number
+  }
+  /**
+   * TOTP/2FA configuration
+   */
+  totp?: {
+    /**
+     * Enable TOTP/2FA features
+     * @default false
+     */
+    enabled?: boolean
+    /**
+     * TOTP configuration
+     */
+    config?: TOTPConfig
+  }
+  /**
+   * UI theme and customization
+   */
+  ui?: {
+    /**
+     * Enable UI components
+     * @default true
+     */
+    enabled?: boolean
+    /**
+     * Default theme configuration
+     */
+    theme?: ThemeConfig
+    /**
+     * Enable internationalization
+     * @default true
+     */
+    i18n?: boolean
+    /**
+     * Default locale
+     * @default 'en'
+     */
+    defaultLocale?: string
+  }
   /**
    * Hash options used for password hashing
    */
@@ -50,6 +159,48 @@ declare module 'nuxt/schema' {
      * Session configuration
      */
     session: SessionConfig
+    /**
+     * Database configuration
+     */
+    database: {
+      url?: string
+      migrationsPath?: string
+      autoMigrate?: boolean
+      enableLogging?: boolean
+    }
+    /**
+     * RBAC configuration
+     */
+    rbac: {
+      enabled: boolean
+      defaultRole: string
+    }
+    /**
+     * Multi-tenant configuration
+     */
+    multiTenant: {
+      enabled: boolean
+      strategy: TenantStrategy
+      resolver?: string
+      header?: string
+      pathIndex?: number
+    }
+    /**
+     * TOTP configuration
+     */
+    totp: {
+      enabled: boolean
+      config: TOTPConfig
+    }
+    /**
+     * UI configuration
+     */
+    ui: {
+      enabled: boolean
+      theme: ThemeConfig
+      i18n: boolean
+      defaultLocale: string
+    }
   }
 }
 
@@ -62,6 +213,36 @@ export default defineNuxtModule<ModuleOptions>({
   defaults: {
     webAuthn: false,
     atproto: false,
+    database: {
+      enabled: undefined, // Auto-detect from NUXT_DATABASE_URL
+      autoMigrate: true,
+      enableLogging: false,
+    },
+    rbac: {
+      enabled: false,
+      defaultRole: 'user',
+    },
+    multiTenant: {
+      enabled: false,
+      strategy: 'subdomain' as TenantStrategy,
+      pathIndex: 0,
+    },
+    totp: {
+      enabled: false,
+      config: {
+        issuer: 'My App',
+        keyLength: 32,
+        window: 30,
+        backupCodesCount: 10,
+        backupCodeLength: 8,
+      },
+    },
+    ui: {
+      enabled: true,
+      theme: {},
+      i18n: true,
+      defaultLocale: 'en',
+    },
     hash: {
       scrypt: {},
     },
@@ -81,6 +262,29 @@ export default defineNuxtModule<ModuleOptions>({
       composables.push({ name: 'useWebAuthn', from: resolver.resolve('./runtime/app/composables/webauthn') })
     }
 
+    // Add new composables based on enabled features
+    if (options.rbac?.enabled) {
+      composables.push(
+        { name: 'usePermissions', from: resolver.resolve('./runtime/app/composables/rbac') },
+        { name: 'useRBAC', from: resolver.resolve('./runtime/app/composables/rbac') },
+      )
+    }
+
+    if (options.multiTenant?.enabled) {
+      composables.push({ name: 'useMultiTenant', from: resolver.resolve('./runtime/app/composables/tenant') })
+    }
+
+    if (options.totp?.enabled) {
+      composables.push(
+        { name: 'use2FA', from: resolver.resolve('./runtime/app/composables/totp') },
+        { name: 'useTOTP', from: resolver.resolve('./runtime/app/composables/totp') },
+      )
+    }
+
+    if (options.ui?.enabled) {
+      composables.push({ name: 'useAuthTheme', from: resolver.resolve('./runtime/app/composables/theme') })
+    }
+
     // App
     addComponentsDir({ path: resolver.resolve('./runtime/app/components') })
     addImports(composables)
@@ -92,6 +296,17 @@ export default defineNuxtModule<ModuleOptions>({
     if (nuxt.options.nitro?.experimental?.websocket) {
       addServerPlugin(resolver.resolve('./runtime/server/plugins/ws'))
     }
+
+    // Database plugin (always add, it checks if database is enabled internally)
+    addServerPlugin(resolver.resolve('./runtime/server/plugins/database'))
+
+    // Multi-tenant plugin
+    if (options.multiTenant?.enabled) {
+      addServerPlugin(resolver.resolve('./runtime/server/plugins/tenant'))
+    }
+
+    // Server imports for new utilities
+    addServerImportsDir(resolver.resolve('./runtime/server/utils'))
     // WebAuthn enabled
     if (options.webAuthn) {
       // Check if dependencies are installed
@@ -109,6 +324,36 @@ export default defineNuxtModule<ModuleOptions>({
       addServerImportsDir(resolver.resolve('./runtime/server/lib/webauthn'))
     }
 
+    // Check database dependencies
+    if (options.database?.enabled || process.env.NUXT_DATABASE_URL) {
+      const missingDeps: string[] = []
+      const databaseDeps = ['drizzle-orm']
+      for (const pkg of databaseDeps) {
+        await import(pkg).catch(() => {
+          missingDeps.push(pkg)
+        })
+      }
+      if (missingDeps.length > 0) {
+        logger.withTag('nuxt-auth-utils').error(`Missing dependencies for database features, please install with:\n\n\`npx nypm i ${missingDeps.join(' ')}\` and optionally \`drizzle-kit\``)
+        process.exit(1)
+      }
+    }
+
+    // Check TOTP dependencies
+    if (options.totp?.enabled) {
+      const missingDeps: string[] = []
+      const totpDeps = ['otpauth', 'qrcode']
+      for (const pkg of totpDeps) {
+        await import(pkg).catch(() => {
+          missingDeps.push(pkg)
+        })
+      }
+      if (missingDeps.length > 0) {
+        logger.withTag('nuxt-auth-utils').error(`Missing dependencies for TOTP/2FA, please install with:\n\n\`npx nypm i ${missingDeps.join(' ')}\``)
+        process.exit(1)
+      }
+    }
+
     addServerImportsDir(resolver.resolve('./runtime/server/utils'))
     addServerHandler({
       handler: resolver.resolve('./runtime/server/api/session.delete'),
@@ -120,6 +365,75 @@ export default defineNuxtModule<ModuleOptions>({
       route: '/api/_auth/session',
       method: 'get',
     })
+
+    // Add new API routes
+    if (options.rbac?.enabled) {
+      addServerHandler({
+        handler: resolver.resolve('./runtime/server/api/permissions.get'),
+        route: '/api/_auth/permissions',
+        method: 'get',
+      })
+      addServerHandler({
+        handler: resolver.resolve('./runtime/server/api/roles/index.get'),
+        route: '/api/_auth/roles',
+        method: 'get',
+      })
+      addServerHandler({
+        handler: resolver.resolve('./runtime/server/api/roles/assign.post'),
+        route: '/api/_auth/roles/assign',
+        method: 'post',
+      })
+    }
+
+    if (options.multiTenant?.enabled) {
+      addServerHandler({
+        handler: resolver.resolve('./runtime/server/api/tenant.get'),
+        route: '/api/_auth/tenant',
+        method: 'get',
+      })
+    }
+
+    if (options.totp?.enabled) {
+      addServerHandler({
+        handler: resolver.resolve('./runtime/server/api/2fa/setup.post'),
+        route: '/api/_auth/2fa/setup',
+        method: 'post',
+      })
+      addServerHandler({
+        handler: resolver.resolve('./runtime/server/api/2fa/enable.post'),
+        route: '/api/_auth/2fa/enable',
+        method: 'post',
+      })
+      addServerHandler({
+        handler: resolver.resolve('./runtime/server/api/2fa/verify.post'),
+        route: '/api/_auth/2fa/verify',
+        method: 'post',
+      })
+      addServerHandler({
+        handler: resolver.resolve('./runtime/server/api/2fa/disable.post'),
+        route: '/api/_auth/2fa/disable',
+        method: 'post',
+      })
+      addServerHandler({
+        handler: resolver.resolve('./runtime/server/api/2fa/backup-codes.post'),
+        route: '/api/_auth/2fa/backup-codes',
+        method: 'post',
+      })
+      addServerHandler({
+        handler: resolver.resolve('./runtime/server/api/2fa/status.get'),
+        route: '/api/_auth/2fa/status',
+        method: 'get',
+      })
+    }
+
+    // Super Admin route (always available when database is enabled)
+    if (options.database?.enabled || process.env.NUXT_DATABASE_URL) {
+      addServerHandler({
+        handler: resolver.resolve('./runtime/server/api/super-admin/login.post'),
+        route: '/api/_auth/super-admin/login',
+        method: 'post',
+      })
+    }
     // Set node:crypto as unenv external
     nuxt.options.nitro.unenv ||= {}
     nuxt.options.nitro.unenv.external ||= []
@@ -143,6 +457,49 @@ export default defineNuxtModule<ModuleOptions>({
 
     runtimeConfig.hash = defu(runtimeConfig.hash, {
       scrypt: options.hash?.scrypt,
+    })
+
+    // Database configuration
+    runtimeConfig.database = defu(runtimeConfig.database, {
+      url: process.env.NUXT_DATABASE_URL,
+      migrationsPath: options.database?.migrationsPath,
+      autoMigrate: options.database?.autoMigrate,
+      enableLogging: options.database?.enableLogging,
+    })
+
+    // RBAC configuration
+    runtimeConfig.rbac = defu(runtimeConfig.rbac, {
+      enabled: options.rbac?.enabled || false,
+      defaultRole: options.rbac?.defaultRole || 'user',
+    })
+
+    // Multi-tenant configuration
+    runtimeConfig.multiTenant = defu(runtimeConfig.multiTenant, {
+      enabled: options.multiTenant?.enabled || false,
+      strategy: options.multiTenant?.strategy || 'subdomain',
+      resolver: options.multiTenant?.resolver,
+      header: options.multiTenant?.header,
+      pathIndex: options.multiTenant?.pathIndex,
+    })
+
+    // TOTP configuration
+    runtimeConfig.totp = defu(runtimeConfig.totp, {
+      enabled: options.totp?.enabled || false,
+      config: defu(options.totp?.config || {}, {
+        issuer: process.env.NUXT_TOTP_ISSUER || 'My App',
+        keyLength: 32,
+        window: 30,
+        backupCodesCount: 10,
+        backupCodeLength: 8,
+      }),
+    })
+
+    // UI configuration
+    runtimeConfig.ui = defu(runtimeConfig.ui, {
+      enabled: options.ui?.enabled !== false,
+      theme: options.ui?.theme || {},
+      i18n: options.ui?.i18n !== false,
+      defaultLocale: options.ui?.defaultLocale || process.env.NUXT_AUTH_DEFAULT_LOCALE || 'en',
     })
 
     // Generate the session password

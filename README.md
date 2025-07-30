@@ -24,6 +24,13 @@ Add Authentication to Nuxt applications with secured & sealed cookies sessions.
 - [`<AuthState>` component](#authstate-component)
 - [Extendable with hooks](#extend-session)
 - [WebSocket support](#websocket-support)
+- [🔒 Enterprise Security Features](#enterprise-security-features)
+  - [Database Integration with Drizzle ORM](#database-integration)
+  - [Multi-tenant Architecture](#multi-tenant-architecture)
+  - [Role-Based Access Control (RBAC)](#role-based-access-control-rbac)
+  - [Super Admin System](#super-admin-system)
+  - [Two-Factor Authentication (2FA/TOTP)](#two-factor-authentication-2fatotp)
+  - [Advanced Security Hardening](#advanced-security-hardening)
 
 It has few dependencies (only from [UnJS](https://github.com/unjs)), run on multiple JS environments (Node, Deno, Workers) and is fully typed with TypeScript.
 
@@ -696,6 +703,175 @@ onMounted(open)
 </template>
 ```
 
+## Enterprise Security Features
+
+### Database Integration
+
+Nuxt Auth Utils now supports optional database integration for advanced features using Drizzle ORM:
+
+```ts
+// nuxt.config.ts
+export default defineNuxtConfig({
+  auth: {
+    database: {
+      enabled: true,
+      url: process.env.NUXT_DATABASE_URL // sqlite:./db.sqlite, postgres://..., mysql://...
+    }
+  }
+})
+```
+
+**Environment Variables:**
+- `NUXT_DATABASE_URL` - Database connection string
+- `NUXT_SUPER_ADMIN_LOGIN` - Super admin email (required with database)
+- `NUXT_SUPER_ADMIN_PASSWORD` - Super admin password (required with database)
+
+### Multi-tenant Architecture
+
+Support for organization-based multi-tenancy with flexible tenant detection:
+
+```ts
+// nuxt.config.ts  
+export default defineNuxtConfig({
+  auth: {
+    multiTenant: {
+      enabled: true,
+      strategy: 'subdomain' // or 'path', 'header'
+    }
+  }
+})
+```
+
+**Environment Variables:**
+- `NUXT_MULTI_TENANT_MODE` - Enable multi-tenant mode (true/false)
+- `NUXT_TENANT_STRATEGY` - Tenant detection strategy (subdomain/path/header)
+
+**Server Utils:**
+```ts
+// Get current tenant context
+const tenant = await getCurrentTenant(event)
+
+// Validate tenant access
+await requireTenantAccess(event, tenantId)
+
+// Get tenant-specific data
+const users = await getTenantUsers(tenantId)
+```
+
+### Role-Based Access Control (RBAC)
+
+Hierarchical permissions system with Organizations → Users → Roles → Permissions:
+
+```ts
+// Server-side permission checking
+const hasPermission = await checkUserPermission(event, 'users:create')
+if (!hasPermission) {
+  throw createError({ statusCode: 403, statusMessage: 'Insufficient permissions' })
+}
+
+// Middleware for route protection
+await requirePermission(event, 'admin:read')
+
+// Multiple permission checking
+const hasAnyPermission = await hasAnyPermissions(event, ['users:read', 'users:write'])
+const hasAllPermissions = await hasAllPermissions(event, ['users:read', 'organizations:read'])
+```
+
+**Vue Composables:**
+```vue
+<script setup>
+const { hasPermission, hasRole, userRoles, userPermissions } = useRBAC()
+
+// Check permissions reactively
+const canCreateUsers = computed(() => hasPermission('users:create'))
+const isAdmin = computed(() => hasRole('admin'))
+</script>
+
+<template>
+  <PermissionGate required="users:create">
+    <button>Create User</button>
+  </PermissionGate>
+  
+  <PermissionGate :required="['admin:read', 'users:read']" mode="any">
+    <AdminPanel />
+  </PermissionGate>
+</template>
+```
+
+### Super Admin System
+
+Cross-tenant super administrator with full system access:
+
+```ts
+// Check if current user is super admin
+const isSuperAdmin = await checkSuperAdminAccess(event)
+
+// Require super admin access
+await requireSuperAdmin(event)
+
+// Super admin utilities
+const stats = await getSuperAdminStats()
+const allTenants = await getAllTenants()
+```
+
+### Two-Factor Authentication (2FA/TOTP)
+
+Time-based One-Time Password support with backup codes:
+
+```ts
+// Enable 2FA for a user
+const { secret, qrCode, backupCodes } = await enable2FA(event, userId)
+
+// Verify TOTP code
+const isValid = await verify2FA(event, userId, totpCode)
+
+// Generate new backup codes
+const newBackupCodes = await generateNewBackupCodes(event, userId)
+
+// Disable 2FA
+await disable2FA(event, userId)
+```
+
+**Vue Components:**
+```vue
+<template>
+  <Auth2FASetup 
+    v-if="!user.twoFactorEnabled"
+    @enabled="handleTwoFactorEnabled"
+  />
+</template>
+```
+
+### Advanced Security Hardening
+
+Comprehensive security features following OWASP guidelines:
+
+**Rate Limiting:**
+- IP-based request limiting
+- Different limits for different endpoints
+- Automatic cleanup and memory management
+
+**Input Validation:**
+- XSS prevention with input sanitization
+- Type validation (email, UUID, TOTP codes)
+- Schema-based validation with custom rules
+
+**Timing Attack Prevention:**
+- Constant-time string comparison
+- Artificial delays for failed authentication
+- Secure password verification
+
+**Enhanced Audit Logging:**
+- Security event tracking
+- Risk factor assessment
+- Real-time security alerts
+- IP reputation checking
+
+**Secure Error Handling:**
+- Production-safe error messages
+- Detailed logging for development
+- Sanitized error responses
+
 ## Configuration
 
 We leverage `runtimeConfig.session` to give the defaults option to [h3 `useSession`](https://h3.unjs.io/examples/handle-session).
@@ -705,12 +881,54 @@ You can overwrite the options in your `nuxt.config.ts`:
 ```ts
 export default defineNuxtConfig({
   modules: ['nuxt-auth-utils'],
+  auth: {
+    // Enable advanced features
+    database: {
+      enabled: true,
+      url: process.env.NUXT_DATABASE_URL
+    },
+    multiTenant: {
+      enabled: true,
+      strategy: 'subdomain'
+    },
+    rbac: {
+      enabled: true,
+      defaultRole: 'user'
+    },
+    // Security configuration
+    security: {
+      rateLimiting: true,
+      inputValidation: true,
+      auditLogging: true
+    }
+  },
   runtimeConfig: {
     session: {
       maxAge: 60 * 60 * 24 * 7 // 1 week
     }
   }
 })
+```
+
+**Required Environment Variables for Advanced Features:**
+```env
+# Database
+NUXT_DATABASE_URL=sqlite:./data/app.db
+
+# Super Admin (required when using database)
+NUXT_SUPER_ADMIN_LOGIN=admin@example.com
+NUXT_SUPER_ADMIN_PASSWORD=secure-password-123!
+
+# Multi-tenant
+NUXT_MULTI_TENANT_MODE=true
+NUXT_TENANT_STRATEGY=subdomain
+
+# Security
+NUXT_SECURITY_LEVEL=production
+NUXT_AUDIT_LOG_LEVEL=info
+
+# Session (always required)
+NUXT_SESSION_PASSWORD=your-32-character-session-password
 ```
 
 Our defaults are:
@@ -739,6 +957,20 @@ Checkout the [`SessionConfig`](https://github.com/unjs/h3/blob/c04c458810e34eb15
 
 - [nuxt-authorization](https://github.com/barbapapazes/nuxt-authorization): Authorization module for managing permissions inside a Nuxt app, compatible with `nuxt-auth-utils`
 
+## Security
+
+This module implements comprehensive security measures:
+
+- **OWASP Top 10 Protection**: Input validation, XSS prevention, secure session management
+- **Rate Limiting**: Prevents brute force attacks with configurable limits
+- **Timing Attack Prevention**: Constant-time operations for authentication
+- **Audit Logging**: Complete security event tracking and monitoring
+- **Input Sanitization**: XSS and injection attack prevention
+- **Secure Error Handling**: Production-safe error messages
+- **Session Security**: Encrypted cookies with proper security headers
+
+For a complete security analysis, see [SECURITY-IMPROVEMENTS.md](./SECURITY-IMPROVEMENTS.md).
+
 ## Development
 
 ```bash
@@ -757,9 +989,12 @@ pnpm run dev:build
 # Run ESLint
 pnpm run lint
 
-# Run Vitest
+# Run Vitest (includes comprehensive security tests)
 pnpm run test
 pnpm run test:watch
+
+# Run type checking
+pnpm run test:types
 
 # Release new version
 pnpm run release

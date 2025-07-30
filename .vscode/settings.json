@@ -1,4 +1,5 @@
 {
   "eslint.useFlatConfig": true,
-  "prettier.enable": false
+  "prettier.enable": false,
+  "nuxt.isNuxtApp": false
 }

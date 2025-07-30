@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "preserve",
+    "allowJs": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "#imports": ["./mocks/nuxt-imports"],
+      "~": ["../"],
+      "~/*": ["../*"],
+      "@": ["../"],
+      "@/*": ["../*"],
+      "~~": ["../"],
+      "~~/*": ["../*"],
+      "@@": ["../"],
+      "@@/*": ["../*"]
+    },
+    "types": ["vitest/globals", "node"]
+  },
+  "include": [
+    "../**/*.ts",
+    "../**/*.tsx",
+    "../**/*.vue",
+    "./**/*.ts"
+  ],
+  "exclude": [
+    "../node_modules",
+    "../dist",
+    "../.nuxt"
+  ]
+}

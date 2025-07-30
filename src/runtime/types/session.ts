@@ -1,9 +1,27 @@
 import type { ComputedRef, Ref } from 'vue'
+import type { Role } from './rbac'
+import type { Organization } from './multi-tenant'
 
 export interface User {
+  id?: string
+  organizationId?: string
+  email?: string
+  emailVerified?: boolean
+  firstName?: string
+  lastName?: string
+  avatar?: string
+  locale?: string
+  timezone?: string
+  twoFactorEnabled?: boolean
+  lastLoginAt?: Date
+  roles?: Role[]
+  organization?: Organization
 }
 
 export interface SecureSessionData {
+  twoFactorSecret?: string
+  backupCodes?: string[]
+  apiTokens?: Record<string, string>
 }
 
 export interface UserSession {

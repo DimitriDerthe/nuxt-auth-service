@@ -46,3 +46,10 @@ coverage
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# Claude
+.claude
+CLAUDE.md
+MIGRATION.md
+SECURITY-IMPROVEMENTS.md
+
