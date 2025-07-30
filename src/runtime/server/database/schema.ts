@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { integer, text, boolean, timestamp, primaryKey, index, uniqueIndex, sqliteTable } from 'drizzle-orm/sqlite-core'
+import { integer, text, timestamp, primaryKey, index, uniqueIndex, sqliteTable } from 'drizzle-orm/sqlite-core'
 
 // Organizations table for multi-tenant support
 export const organizations = sqliteTable('organizations', {
@@ -20,14 +20,14 @@ export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
   organizationId: text('organization_id').references(() => organizations.id, { onDelete: 'cascade' }),
   email: text('email').notNull(),
-  emailVerified: boolean('email_verified').default(false),
+  emailVerified: integer('email_verified', { mode: 'boolean' }).default(false),
   password: text('password'),
   firstName: text('first_name'),
   lastName: text('last_name'),
   avatar: text('avatar'),
   locale: text('locale').default('en'),
   timezone: text('timezone'),
-  twoFactorEnabled: boolean('two_factor_enabled').default(false),
+  twoFactorEnabled: integer('two_factor_enabled', { mode: 'boolean' }).default(false),
   twoFactorSecret: text('two_factor_secret'),
   lastLoginAt: timestamp('last_login_at'),
   createdAt: timestamp('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
@@ -44,7 +44,7 @@ export const roles = sqliteTable('roles', {
   name: text('name').notNull(),
   slug: text('slug').notNull(),
   description: text('description'),
-  isDefault: boolean('is_default').default(false),
+  isDefault: integer('is_default', { mode: 'boolean' }).default(false),
   createdAt: timestamp('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: timestamp('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
 }, table => ({
@@ -89,7 +89,7 @@ export const recoveryCodes = sqliteTable('recovery_codes', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   code: text('code').notNull(),
-  used: boolean('used').default(false),
+  used: integer('used', { mode: 'boolean' }).default(false),
   usedAt: timestamp('used_at'),
   createdAt: timestamp('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
 }, table => ({
@@ -120,7 +120,7 @@ export const credentials = sqliteTable('credentials', {
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   publicKey: text('public_key').notNull(),
   counter: integer('counter').notNull().default(0),
-  backedUp: boolean('backed_up').notNull().default(false),
+  backedUp: integer('backed_up', { mode: 'boolean' }).notNull().default(false),
   transports: text('transports').notNull(),
   name: text('name'), // User-friendly name for the credential
   createdAt: timestamp('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),

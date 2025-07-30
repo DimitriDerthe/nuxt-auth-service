@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.6.5
+
+[compare changes](https://github.com/DimitriDerthe/nuxt-auth-service/compare/v0.6.4...v0.6.5)
+
+### 🩹 Fixes
+
+- **Drizzle ORM Compatibility**: Fixed SQLite boolean column type compatibility with Drizzle ORM v0.44.4+ by replacing `boolean()` with `integer({ mode: 'boolean' })` in database schema
+- **Database Schema**: Updated all boolean fields in schema to use correct SQLite syntax (emailVerified, twoFactorEnabled, isDefault, used, backedUp)
+- **Import Resolution**: Removed obsolete `boolean` import from `drizzle-orm/sqlite-core` as SQLite doesn't have native boolean type
+
+### 🧪 Testing
+
+- **Test Coverage**: All 182 tests passing with verified schema compatibility
+- **Enterprise Features**: Continued validation of all security features including 2FA, RBAC, and multi-tenant functionality
+
+### ❤️ Contributors
+
+- DimitriDerthe ([@DimitriDerthe](http://github.com/DimitriDerthe))
+- Claude AI Assistant (Development Support)
+
 ## v0.6.4
 
 [compare changes](https://github.com/DimitriDerthe/nuxt-auth-service/compare/v0.6.3...v0.6.4)
