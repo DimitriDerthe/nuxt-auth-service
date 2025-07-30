@@ -1,7 +1,24 @@
 import { randomUUID, randomBytes } from 'uncrypto'
-import { TOTP, Secret } from 'otpauth'
-import QRCode from 'qrcode'
 import { createError } from 'h3'
+
+// Conditional imports for TOTP dependencies
+let TOTP: typeof import('otpauth').TOTP | undefined
+let Secret: typeof import('otpauth').Secret | undefined
+let QRCode: typeof import('qrcode') | undefined
+
+try {
+  const otpauth = await import('otpauth')
+  TOTP = otpauth.TOTP
+  Secret = otpauth.Secret
+} catch {
+  // TOTP dependencies not available
+}
+
+try {
+  QRCode = (await import('qrcode')).default
+} catch {
+  // QR code dependency not available
+}
 import { schema, eq, and, sql } from '../database/connection'
 import { useDatabase, isDatabaseFeatureEnabled } from './database'
 import { useRuntimeConfig } from '#imports'
@@ -13,6 +30,13 @@ import type { TOTPSecret, TOTPVerification, TOTPConfig } from '#auth-utils'
  * Generate a new TOTP secret for user
  */
 export async function generateTOTPSecret(userId: string, email: string): Promise<TOTPSecret> {
+  if (!TOTP || !Secret || !QRCode) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'TOTP dependencies not available. Install otpauth and qrcode packages.',
+    })
+  }
+
   const config = useRuntimeConfig()
   const totpConfig = config.totp?.config || getDefaultTOTPConfig()
 
@@ -50,6 +74,10 @@ export async function generateTOTPSecret(userId: string, email: string): Promise
  * Verify TOTP code
  */
 export async function verifyTOTPCode(secret: string, token: string, window: number = 1): Promise<boolean> {
+  if (!TOTP || !Secret) {
+    return false
+  }
+
   try {
     const totp = new TOTP({
       secret: Secret.fromBase32(secret),

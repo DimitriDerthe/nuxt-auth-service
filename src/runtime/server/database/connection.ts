@@ -166,5 +166,5 @@ export { schema }
 export type { DatabaseInstance }
 
 // Re-export common Drizzle utilities
-export { eq, and, or, not, isNull, isNotNull, inArray, notInArray } from 'drizzle-orm'
+export { eq, and, or, not, isNull, isNotNull, inArray, notInArray, sql } from 'drizzle-orm'
 export { desc, asc } from 'drizzle-orm'

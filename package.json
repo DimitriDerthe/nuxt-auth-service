@@ -55,9 +55,12 @@
     "@atproto/oauth-client-node": "^0.2.0",
     "@simplewebauthn/browser": "^11.0.0",
     "@simplewebauthn/server": "^11.0.0",
+    "better-sqlite3": "^11.0.0",
     "drizzle-orm": "^0.36.0",
     "drizzle-kit": "^0.28.0",
+    "mysql2": "^3.0.0",
     "otpauth": "^9.3.4",
+    "postgres": "^3.4.0",
     "qrcode": "^1.5.4"
   },
   "peerDependenciesMeta": {
@@ -77,6 +80,15 @@
       "optional": true
     },
     "drizzle-kit": {
+      "optional": true
+    },
+    "better-sqlite3": {
+      "optional": true
+    },
+    "mysql2": {
+      "optional": true
+    },
+    "postgres": {
       "optional": true
     },
     "otpauth": {
