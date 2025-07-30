@@ -4,7 +4,7 @@ import type { UserSession, UserSessionComposable } from '#auth-utils'
 
 /**
  * Composable to get back the user session and utils around it.
- * @see https://github.com/atinux/nuxt-auth-utils
+ * @see https://github.com/DimitriDerthe/nuxt-auth-service
  */
 export function useUserSession(): UserSessionComposable {
   const serverEvent = import.meta.server ? useRequestEvent() : null
@@ -39,14 +39,14 @@ export function useUserSession(): UserSessionComposable {
   }
 
   const popupListener = (e: StorageEvent) => {
-    if (e.key === 'temp-nuxt-auth-utils-popup') {
+    if (e.key === 'temp-nuxt-auth-service-popup') {
       fetch()
       window.removeEventListener('storage', popupListener)
     }
   }
   const openInPopup = (route: string, size: { width?: number, height?: number } = {}) => {
     // Set a local storage item to tell the popup that we pending auth
-    localStorage.setItem('temp-nuxt-auth-utils-popup', 'true')
+    localStorage.setItem('temp-nuxt-auth-service-popup', 'true')
 
     const width = size.width ?? 960
     const height = size.height ?? 600
@@ -59,7 +59,7 @@ export function useUserSession(): UserSessionComposable {
 
     window.open(
       route,
-      'nuxt-auth-utils-popup',
+      'nuxt-auth-service-popup',
       `width=${width}, height=${height}, top=${top}, left=${left}, toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no`,
     )
 

@@ -38,7 +38,7 @@ export async function getUserSession(event: UseSessionEvent): Promise<UserSessio
  * Set a user session
  * @param event The Request (h3) event
  * @param data User session data, please only store public information since it can be decoded with API calls
- * @see https://github.com/atinux/nuxt-auth-utils
+ * @see https://github.com/DimitriDerthe/nuxt-auth-service
  */
 export async function setUserSession(event: H3Event, data: Omit<UserSession, 'id'>, config?: Partial<SessionConfig>): Promise<UserSession> {
   const session = await _useSession(event, config)
@@ -82,7 +82,7 @@ export async function clearUserSession(event: H3Event, config?: Partial<SessionC
  * @param opts Options to customize the error message and status code
  * @param opts.statusCode The status code to use for the error (defaults to 401)
  * @param opts.message The message to use for the error (defaults to Unauthorized)
- * @see https://github.com/atinux/nuxt-auth-utils
+ * @see https://github.com/DimitriDerthe/nuxt-auth-service
  */
 export async function requireUserSession(event: UseSessionEvent, opts: { statusCode?: number, message?: string } = {}): Promise<UserSessionRequired> {
   const userSession = await getUserSession(event)

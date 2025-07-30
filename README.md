@@ -1,4 +1,4 @@
-# Nuxt Auth Utils
+# Nuxt Auth Service
 
 [![npm version][npm-version-src]][npm-version-href]
 [![npm downloads][npm-downloads-src]][npm-downloads-href]
@@ -44,10 +44,10 @@ You can anyway use [Hybrid Rendering](#hybrid-rendering) to pre-render pages of 
 
 ## Quick Setup
 
-1. Add `nuxt-auth-utils` in your Nuxt project
+1. Add `nuxt-auth-service` in your Nuxt project
 
 ```bash
-npx nuxi@latest module add auth-utils
+npm install nuxt-auth-service
 ```
 
 2. Add a `NUXT_SESSION_PASSWORD` env variable with at least 32 characters in the `.env`.
@@ -310,7 +310,7 @@ You can configure the scrypt options in your `nuxt.config.ts`:
 
 ```ts
 export default defineNuxtConfig({
-  modules: ['nuxt-auth-utils'],
+  modules: ['nuxt-auth-service'],
   auth: {
     hash: {
       scrypt: {
@@ -880,7 +880,7 @@ You can overwrite the options in your `nuxt.config.ts`:
 
 ```ts
 export default defineNuxtConfig({
-  modules: ['nuxt-auth-utils'],
+  modules: ['nuxt-auth-service'],
   auth: {
     // Enable advanced features
     database: {
@@ -955,7 +955,7 @@ Checkout the [`SessionConfig`](https://github.com/unjs/h3/blob/c04c458810e34eb15
 
 ## More
 
-- [nuxt-authorization](https://github.com/barbapapazes/nuxt-authorization): Authorization module for managing permissions inside a Nuxt app, compatible with `nuxt-auth-utils`
+- [nuxt-authorization](https://github.com/barbapapazes/nuxt-authorization): Authorization module for managing permissions inside a Nuxt app, compatible with `nuxt-auth-service`
 
 ## Security
 

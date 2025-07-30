@@ -13,9 +13,9 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     })
   }
 
-  if (localStorage.getItem('temp-nuxt-auth-utils-popup')) {
+  if (localStorage.getItem('temp-nuxt-auth-service-popup')) {
     // There is a local storage item. That's mean we are coming back in the popup
-    localStorage.removeItem('temp-nuxt-auth-utils-popup')
+    localStorage.removeItem('temp-nuxt-auth-service-popup')
     const error = useError()
     if (!error.value) window.close()
   }

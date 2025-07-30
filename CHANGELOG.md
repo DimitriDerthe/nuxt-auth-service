@@ -2,7 +2,7 @@
 
 ## v0.6.0
 
-[compare changes](https://github.com/atinux/nuxt-auth-utils/compare/v0.5.20...v0.6.0)
+[compare changes](https://github.com/DimitriDerthe/nuxt-auth-service/compare/v0.5.20...v0.6.0)
 
 ### 🔥 Major Features
 
@@ -240,6 +240,7 @@ NUXT_AUDIT_LOG_LEVEL=info
 
 ### ❤️ Contributors
 
+- DimitriDerthe (Package Owner & Maintainer)
 - Claude AI Assistant (Security Analysis & Implementation)
 - Security Community (OWASP Guidelines & Best Practices)
 

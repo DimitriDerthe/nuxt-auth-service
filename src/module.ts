@@ -318,7 +318,7 @@ export default defineNuxtModule<ModuleOptions>({
         })
       }
       if (missingDeps.length > 0) {
-        logger.withTag('nuxt-auth-utils').error(`Missing dependencies for \`WebAuthn\`, please install with:\n\n\`npx nypm i ${missingDeps.join(' ')}\``)
+        logger.withTag('nuxt-auth-service').error(`Missing dependencies for \`WebAuthn\`, please install with:\n\n\`npx nypm i ${missingDeps.join(' ')}\``)
         process.exit(1)
       }
       addServerImportsDir(resolver.resolve('./runtime/server/lib/webauthn'))
@@ -334,7 +334,7 @@ export default defineNuxtModule<ModuleOptions>({
         })
       }
       if (missingDeps.length > 0) {
-        logger.withTag('nuxt-auth-utils').error(`Missing dependencies for database features, please install with:\n\n\`npx nypm i ${missingDeps.join(' ')}\` and optionally \`drizzle-kit\``)
+        logger.withTag('nuxt-auth-service').error(`Missing dependencies for database features, please install with:\n\n\`npx nypm i ${missingDeps.join(' ')}\` and optionally \`drizzle-kit\``)
         process.exit(1)
       }
     }
@@ -349,7 +349,7 @@ export default defineNuxtModule<ModuleOptions>({
         })
       }
       if (missingDeps.length > 0) {
-        logger.withTag('nuxt-auth-utils').error(`Missing dependencies for TOTP/2FA, please install with:\n\n\`npx nypm i ${missingDeps.join(' ')}\``)
+        logger.withTag('nuxt-auth-service').error(`Missing dependencies for TOTP/2FA, please install with:\n\n\`npx nypm i ${missingDeps.join(' ')}\``)
         process.exit(1)
       }
     }
@@ -631,7 +631,7 @@ export default defineNuxtModule<ModuleOptions>({
       }
 
       if (missingDeps.length > 0) {
-        logger.withTag('nuxt-auth-utils').error(`Missing dependencies for \`atproto\`, please install with:\n\n\`npx nypm i ${missingDeps.join(' ')}\``)
+        logger.withTag('nuxt-auth-service').error(`Missing dependencies for \`atproto\`, please install with:\n\n\`npx nypm i ${missingDeps.join(' ')}\``)
         process.exit(1)
       }
 
