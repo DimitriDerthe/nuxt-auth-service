@@ -34,7 +34,7 @@ export function getAtprotoClientMetadata(
     || getOAuthRedirectURL(event),
   )
 
-  const dev = import.meta.dev
+  const dev = process.env.NODE_ENV === 'development'
   if (dev && redirectURL.hostname === 'localhost') {
     // For local development, Bluesky authorization servers allow "http://127.0.0.1" as a special value for redirect URIs
     redirectURL.hostname = '127.0.0.1'

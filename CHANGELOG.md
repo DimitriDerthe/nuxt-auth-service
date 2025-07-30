@@ -231,6 +231,13 @@ NUXT_AUDIT_LOG_LEVEL=info
 - **CI/CD**: Comprehensive security testing in continuous integration
 - **Performance**: Optimized database queries and caching strategies
 
+### 🔧 Fixes
+
+#### Build System
+- **Module Build Fix**: Resolved `import.meta.dev` compatibility issues in OAuth providers (TikTok, PayPal) and AT Protocol utilities
+- **Added Dev Utils**: Created missing `runtime/utils/dev.ts` file to support build system module resolution
+- **Build Compatibility**: Replaced `import.meta.dev` with `process.env.NODE_ENV === 'development'` for universal compatibility
+
 ### ❤️ Contributors
 
 - Claude AI Assistant (Security Analysis & Implementation)

@@ -35,7 +35,7 @@ export interface OAuthPaypalConfig {
 
   /**
    * Use PayPal sandbox environment
-   * @default import.meta.dev // true in development, false in production
+   * @default process.env.NODE_ENV === 'development' // true in development, false in production
    */
   sandbox?: boolean
 
@@ -67,7 +67,7 @@ export interface OAuthPaypalConfig {
 export function defineOAuthPaypalEventHandler({ config, onSuccess, onError }: OAuthConfig<OAuthPaypalConfig>) {
   return eventHandler(async (event: H3Event) => {
     config = defu(config, useRuntimeConfig(event).oauth?.paypal, {
-      sandbox: import.meta.dev,
+      sandbox: process.env.NODE_ENV === 'development',
       authorizationURL: 'https://www.paypal.com/signin/authorize',
       tokenURL: 'https://api-m.paypal.com/v1/oauth2/token',
       authorizationParams: {},

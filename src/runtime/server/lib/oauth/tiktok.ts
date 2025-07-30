@@ -34,7 +34,7 @@ export interface OAuthTikTokConfig {
    * This is because Login Kit for Web doesn't support localhost or IP addresses as redirect URIs.
    * @see https://developers.tiktok.com/doc/login-kit-web/
    * @see https://developers.tiktok.com/doc/login-kit-desktop/
-   * @default import.meta.dev // true in development, false in production
+   * @default process.env.NODE_ENV === 'development' // true in development, false in production
    */
   sandbox?: boolean
 
@@ -60,7 +60,7 @@ export interface OAuthTikTokConfig {
 export function defineOAuthTikTokEventHandler({ config, onSuccess, onError }: OAuthConfig<OAuthTikTokConfig>) {
   return eventHandler(async (event: H3Event) => {
     config = defu(config, useRuntimeConfig(event).oauth?.tiktok, {
-      sandbox: import.meta.dev,
+      sandbox: process.env.NODE_ENV === 'development',
       authorizationURL: 'https://www.tiktok.com/v2/auth/authorize/',
       tokenURL: 'https://open.tiktokapis.com/v2/oauth/token/',
     }) as OAuthTikTokConfig
